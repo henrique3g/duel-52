@@ -1,7 +1,9 @@
+import { v4 } from 'uuid';
+
 type Id = string;
 
 function randomId(): Id {
-  return `${Math.random() * 10}`;
+  return v4();
 }
 
 enum CardType {

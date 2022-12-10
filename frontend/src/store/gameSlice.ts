@@ -1,16 +1,17 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { Card } from "../Hand";
-import Two from '../svg/2.svg';
+import { GameState } from "./StateTypes";
 
 const gameSlice = createSlice({
   name: 'game',
   initialState: {
+    gameState: {
+      
+    } as GameState,
     playerBoard: [
       [],
       [],
       [],
     ],
-    playerHand: [{ flipped: true, image: Two }, {flipped: false, image: Two }] as Card[],
     opponentHandSize: 3,
     round: {
       currentPlayer: 1,
@@ -25,10 +26,13 @@ const gameSlice = createSlice({
       }
       state.round.currentPlayer = 1;
     },
+    updateState(state, action) {
+      state.gameState = action.payload; 
+    },
   },
 });
 
 const { actions, reducer } = gameSlice;
 
-export const { changePlayer } = actions;
+export const GameActions = actions;
 export default reducer;

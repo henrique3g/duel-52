@@ -1,14 +1,47 @@
-import { Card } from './Hand';
+import { Card, CardType } from './store/StateTypes';
 import Back from './svg/back.svg';
+import A from './svg/a.svg';
+import Two from './svg/2.svg';
+import Three from './svg/3.svg';
+import Four from './svg/4.svg';
+import Five from './svg/5.svg';
+import Six from './svg/6.svg';
+import Seven from './svg/7.svg';
+import Eight from './svg/8.svg';
+import Nine from './svg/9.svg';
+import Ten from './svg/10.svg';
+import J from './svg/j.svg';
+import Q from './svg/q.svg';
+import K from './svg/k.svg';
 
 type CardProps = {
-  card: Card | null;
+  card: Card | string;
   className?: string;
 };
 
+const CardImages = {
+  Back,
+  [CardType.A]: A,
+  [CardType.Two]: Two,
+  [CardType.Three]: Three,
+  [CardType.Four]: Four,
+  [CardType.Five]: Five,
+  [CardType.Six]: Six,
+  [CardType.Seven]: Seven,
+  [CardType.Eight]: Eight,
+  [CardType.Nine]: Nine,
+  [CardType.Ten]: Ten,
+  [CardType.J]: J,
+  [CardType.Q]: Q,
+  [CardType.K]: K,
+};
+
 export const CardElement = ({ card, className }: CardProps) => {
-  return <div className={ `border-gray-500 border-solid border-2 w-20 rounded-md ${className}` }>
-    { !card && <img src={Back} className='w-full h-full' /> }
-    { card && <img src={card.image} className='w-full h-full' />}
+  return <div className={`border-gray-500 border-solid border-2 w-20 rounded-md ${className}`}>
+    {
+      typeof card === 'string' ? <img alt='A card face down' src={CardImages.Back} className='w-full h-full' /> 
+      : <img alt={`A card of playing card of value ${card.cardType}`} src={CardImages[card.cardType]} className='w-full h-full' />
+    }
   </div>;
 }
+

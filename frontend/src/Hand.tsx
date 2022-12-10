@@ -1,4 +1,5 @@
 import { CardElement } from "./Card";
+import { Card as Cardd } from './store/StateTypes';
 
 export type Card = {
   flipped: boolean;
@@ -6,13 +7,13 @@ export type Card = {
 };
 
 type HandProps = {
-  cards?: Card[],
+  cards?: Cardd[],
   handSize?: number,
   className: string,
 };
 
 function arrayFromSize(size: number = 0) {
-  return Array.from(Array(size), () => null)
+  return Array.from(Array(size), () => 'card-hidden')
 }
 
 export const Hand = ({ cards, handSize, className }: HandProps) => {

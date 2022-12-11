@@ -51,6 +51,10 @@ export type GameState = {
     remainingActions: number,
     currentState: TurnStatus,
   },
+  gameInfo: {
+    discardPile: number,
+    drawPile: number,
+  },
 };
 
 export enum TurnStatus {

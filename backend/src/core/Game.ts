@@ -49,6 +49,10 @@ export type PlayerState = {
     remainingActions: number,
     currentState: TurnStatus,
   },
+  gameInfo: {
+    discardPile: number,
+    drawPile: number,
+  },
 };
 
 export enum TurnStatus {
@@ -434,6 +438,10 @@ export class Game {
         isMyTurn: this.currentPlayer === playerId,
         remainingActions: this.remainingActions,
         currentState: this.currentStatus,
+      },
+      gameInfo: {
+        discardPile: this.discardPile.length,
+        drawPile: this.drawPile.cards.length,
       },
     };
   }

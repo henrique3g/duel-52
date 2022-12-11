@@ -28,7 +28,7 @@ export const Board = () => {
 
   return (
     <div className="bg-emerald-500/75 w-screen h-screen flex px-2">
-      <StackCards className='self-center' title='Draw pile' />
+      <StackCards className='self-center' title='Draw pile' quantity={gameState.gameInfo.drawPile} />
       <div className='flex flex-1 flex-col relative justify-between items-center'>
 
         <div style={{ zIndex: -1 }} className='absolute inset-0 flex justify-center items-center'>
@@ -49,7 +49,7 @@ export const Board = () => {
       </div>
       <div className='flex flex-col relative'>
         <div className={`flex items-center absolute h-full`} >
-          <StackCards className='' title='Discard pile' />
+          <StackCards className='' title='Discard pile' quantity={gameState.gameInfo.discardPile} />
         </div>
         <TurnManager className='mb-5 mt-auto' />
         <button className='mb-10 py-1 bg-red-500 text-white rounded-md' onClick={() => dispatch(GameActions.changePlayer())} disabled={!gameState.turnInfo.isMyTurn}>End turn</button>

@@ -7,17 +7,23 @@ type LaneProps = {
 };
 
 export const Lane = ({ number, className }: LaneProps) => {
-  const { I } = useAppSelector(state => state.game.gameState);
-  const baseCard = I.board[number].baseCard;
-  return <div className={`h-full bg-emerald-400/90 flex-1 flex flex-col justify-between ${className}`}>
-    <div className="justify-center flex">
-      {baseCard !== null && <CardElement card={baseCard} />}
-    </div>
+  const { I, opponent } = useAppSelector(state => state.game.gameState);
+  const myBaseCard = I.board[number].baseCard;
+  const opponentBaseCard = opponent.board[number].baseCard;
 
-    <div className="justify-center flex">
-      {baseCard !== null && <CardElement card={baseCard} />}
+  return (
+    <div className={`h-full bg-emerald-400/50 flex-1 flex flex-col justify-between ${className}`}>
+      <div className="justify-center flex">
+        {opponentBaseCard !== null && <CardElement card={opponentBaseCard} />}
+      </div>
+
+
+
+      <div className="justify-center flex">
+        {myBaseCard !== null && <CardElement card={myBaseCard} />}
+      </div>
     </div>
-  </div>;
+  );
 }
 
 export const LaneSeparator = () => (

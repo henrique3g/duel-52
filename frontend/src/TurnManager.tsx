@@ -4,13 +4,17 @@ type TurnManagerProps = {
   className?: string;
 };
 
-export const TurnManager = ({className}: TurnManagerProps) => {
-  const { remainingActions } = useAppSelector((state) => state.game.round);
+export const TurnManager = ({ className }: TurnManagerProps) => {
+  const { turnInfo } = useAppSelector((state) => state.game.gameState);
 
-  return <div className={`relative rounded-full bg-red-300/70 p-7 ${className}`}>
-    <div className="absolute inset-0 flex justify-center items-start">
-      <span className="text-white font-semibold mt-2">Actions</span>
+  return <div className={`bg-blue-500 text-white rounded px-2 py-1 ${className}`}>
+    <div>
+      <span className="font-normal text-xs">Actions: </span>
+      <span className="font-semibold">{turnInfo.remainingActions}</span>
     </div>
-    <div className="text-white font-semibold w-7 h-7">{remainingActions}</div>
+    <div>
+      <span className="font-normal text-xs">Current player: </span>
+      <span className="">{turnInfo.isMyTurn ? 'You' : 'Opponent'}</span>
+    </div>
   </div>;
 };

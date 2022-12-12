@@ -116,7 +116,10 @@ export class Game {
   }
 
   public endTurn(playerId: Id) {
-    this.validatePlayerTurn(playerId);
+    // this.validatePlayerTurn(playerId);
+    if (playerId !== this.currentPlayer) {
+      throw new Error("Player can't play at opponent turn");
+    }
 
     if (this.currentPlayer === this.player1.id) {
       this.currentPlayer = this.player2.id;
@@ -141,10 +144,11 @@ export class Game {
     if (lane.isWon) {
       return;
     }
-    const possibleCard = hand.getCardById(cardId);
+    const possibleCard = hand.discardCard(cardId);
     if (!possibleCard) {
       throw new Error("Card not found");
     }
+    this.remainingActions -= 1;
     lane.addCard(possibleCard);
   }
 
@@ -214,7 +218,7 @@ export class Game {
     }
   }
 
-  public attackCard(playerId: Id, laneId: Id, attackerId: Id, attackedId: Id) {
+  public attackCard(playerId: Id, laneId: Id, opponentLaneId: Id, attackerId: Id, attackedId: Id) {
     this.validatePlayerTurn(playerId);
 
     const opponentId = Object.keys(this.boards).find(id => playerId !== id)!;
@@ -230,7 +234,7 @@ export class Game {
     }
 
     const attackedBoard = this.boards[opponentId];
-    const attackedLane = attackedBoard.getLane(laneId);
+    const attackedLane = attackedBoard.getLane(opponentLaneId);
     const attackedCard = attackedLane.getCardById(attackedId);
 
     if (!attackedCard) {

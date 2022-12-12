@@ -34,15 +34,15 @@ export type GameState = {
     board: [
       {
         baseCard: Card | string | null,
-        cards: Array<Card | string | null>,
+        cards: Array<Card | string>,
       },
       {
         baseCard: Card | string | null,
-        cards: Array<Card | string | null>,
+        cards: Array<Card | string>,
       },
       {
         baseCard: Card | string | null,
-        cards: Array<Card | string | null>,
+        cards: Array<Card | string>,
       },
     ],
   },

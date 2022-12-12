@@ -5,22 +5,33 @@ import { Hand } from './Hand';
 import { Lane, LaneSeparator } from './Lane';
 import { useAppDispatch, useAppSelector } from './store';
 import { TurnManager } from './TurnManager';
-import axios from 'axios';
 import { StackCards } from './CardStacks';
+import * as api from './api';
 
 
 export const Board = () => {
-  const { gameState } = useAppSelector((state) => state.game);
+  const gameState = useAppSelector((state) => state.game.gameState);
   const dispatch = useAppDispatch();
   const [started, setStarted] = useState(false);
 
   useEffect(() => {
-    axios.post('http://localhost:4000/game').then(response => {
+    api.newGame().then(response => {
       console.log({ response });
       setStarted(true);
       dispatch(GameActions.updateState(response.data));
     })
   }, [dispatch]);
+
+  const endTurn = () => {
+    api.endTurn()
+      .then(response => {
+        console.log({ responseEndTurn: response });
+        dispatch(GameActions.updateState(response.data));
+      })
+      .catch(error => {
+        console.log({ error });
+      });
+  }
 
   if (!started) {
     return <div>Loading</div>
@@ -51,8 +62,12 @@ export const Board = () => {
         <div className={`flex items-center absolute h-full`} >
           <StackCards className='' title='Discard pile' quantity={gameState.gameInfo.discardPile} />
         </div>
-        <TurnManager className='mb-5 mt-auto' />
-        <button className='mb-10 py-1 bg-red-500 text-white rounded-md' onClick={() => dispatch(GameActions.changePlayer())} disabled={!gameState.turnInfo.isMyTurn}>End turn</button>
+        <TurnManager className='mb-5 mt-auto z-0' />
+        <button
+          className='mb-10 py-1 bg-red-500 text-white rounded-md z-0'
+          onClick={endTurn}
+          disabled={!gameState.turnInfo.isMyTurn}
+        >End turn</button>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { DrawPile } from 'src/core/DrawPile';
 import { Game } from 'src/core/Game';
 import { Lane } from 'src/core/Lane';
@@ -25,6 +25,12 @@ export class GameController {
     this.game.startGame();
 
     return this.game.getPlayerState(player1.id);
+  }
+
+  @Post('end-turn')
+  public endTurn(@Body('playerId') playerId: string ) {
+    this.game.endTurn(playerId);
+    return this.game.getPlayerState(playerId);
   }
 }
 

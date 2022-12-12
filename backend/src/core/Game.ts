@@ -7,42 +7,33 @@ import { PlayerBoard } from './PlayerBoard';
 import { PlayerHand } from './PlayerHand';
 import { Id } from './MainState';
 
-export type PlayerState = {
 
+type HiddenCard = {
+  id: Id;
+  damageReceived: number;
+};
+
+type MyLane = {
+  baseCard: Card | HiddenCard;
+  cards: Card[];
+  isFreezed: boolean;
+};
+
+type OpponentLane = {
+  baseCard: Card | HiddenCard,
+  cards: Array<Card | HiddenCard>,
+  isFreezed: boolean,
+};
+
+export type PlayerState = {
   I: {
     playerId: Id,
     hand: Card[],
-    board: [
-      {
-        baseCard: Card | Id | null,
-        cards: Card[],
-      },
-      {
-        baseCard: Card | Id | null,
-        cards: Card[],
-      },
-      {
-        baseCard: Card | Id | null,
-        cards: Card[],
-      },
-    ],
+    board: [MyLane, MyLane, MyLane],
   };
   opponent: {
     hand: number,
-    board: [
-      {
-        baseCard: Card | Id | null,
-        cards: Array<Card | Id | null>,
-      },
-      {
-        baseCard: Card | Id | null,
-        cards: Array<Card | Id | null>,
-      },
-      {
-        baseCard: Card | Id | null,
-        cards: Array<Card | Id | null>,
-      },
-    ],
+    board: [OpponentLane, OpponentLane, OpponentLane],
   },
   turnInfo: {
     isMyTurn: boolean,
@@ -135,12 +126,12 @@ export class Game {
     this.drawCard();
   }
 
-  public setCard(playerId: Id, cardId: Id, laneId: Id) {
+  public setCard(playerId: Id, cardId: Id, laneIndex: number) {
     this.validatePlayerTurn(playerId);
 
     const board = this.boards[playerId];
     const hand = this.hands[playerId];
-    const lane = board.getLane(laneId);
+    const lane = board.lanes[laneIndex];
     if (lane.isWon) {
       return;
     }
@@ -152,11 +143,11 @@ export class Game {
     lane.addCard(possibleCard);
   }
 
-  public flipCard(playerId: Id, cardId: Id, laneId: Id) {
+  public flipCard(playerId: Id, cardId: Id, laneIndex: number) {
     this.validatePlayerTurn(playerId);
 
     const board = this.boards[playerId];
-    const lane = board.getLane(laneId);
+    const lane = board.lanes[laneIndex];
     if (lane.isWon) {
       return;
     }
@@ -218,12 +209,12 @@ export class Game {
     }
   }
 
-  public attackCard(playerId: Id, laneId: Id, opponentLaneId: Id, attackerId: Id, attackedId: Id) {
+  public attackCard(playerId: Id, laneIndex: number, attackerId: Id, attackedId: Id) {
     this.validatePlayerTurn(playerId);
 
     const opponentId = Object.keys(this.boards).find(id => playerId !== id)!;
     const attackerBoard = this.boards[playerId];
-    const attackerLane = attackerBoard.getLane(laneId);
+    const attackerLane = attackerBoard.lanes[laneIndex];
     const attackerCard = attackerLane.getCardById(attackerId);
 
     if (!attackerCard) {
@@ -234,7 +225,7 @@ export class Game {
     }
 
     const attackedBoard = this.boards[opponentId];
-    const attackedLane = attackedBoard.getLane(opponentLaneId);
+    const attackedLane = attackedBoard.lanes[laneIndex];
     const attackedCard = attackedLane.getCardById(attackedId);
 
     if (!attackedCard) {
@@ -269,7 +260,7 @@ export class Game {
 
   }
 
-  public doSecondAttackOf10(playerId: Id, laneId: Id, attackerId: Id, attackedId: Id) {
+  public doSecondAttackOf10(playerId: Id, laneIndex: number, attackerId: Id, attackedId: Id) {
     this.validatePlayerTurn(playerId);
     if (this.cardToSecondAttack !== attackerId) {
       throw new Error("Some error occurred");
@@ -277,7 +268,7 @@ export class Game {
 
     const opponentId = Object.keys(this.boards).find(id => playerId !== id)!;
     const attackerBoard = this.boards[playerId];
-    const attackerLane = attackerBoard.getLane(laneId);
+    const attackerLane = attackerBoard.lanes[laneIndex];
     const attackerCard = attackerLane.getCardById(attackerId);
 
     if (!attackerCard) {
@@ -285,7 +276,7 @@ export class Game {
     }
 
     const attackedBoard = this.boards[opponentId];
-    const attackedLane = attackedBoard.getLane(laneId);
+    const attackedLane = attackedBoard.lanes[laneIndex];
     const attackedCard = attackedLane.getCardById(attackedId);
 
     if (!attackedCard) {
@@ -300,7 +291,7 @@ export class Game {
   }
 
   private drawCard() {
-    const card = this.drawPile.draw()!;
+    const card = this.drawPile.draw();
     if (card) {
       const hand = this.hands[this.currentPlayer];
       hand.addCard(card);
@@ -321,18 +312,16 @@ export class Game {
     this.discardPile.push(discardedCard);
   }
 
-  public seeFaceDownCard(playerId: Id, cardId: Id, laneId: Id) {
+  public seeFaceDownCard(playerId: Id, cardId: Id) {
     this.validatePlayerTurn(playerId);
     if (this.currentStatus !== TurnStatus.WAITING_CHOOSE_CARD_TO_SEE) {
       throw new Error("Can't see a card face down");
     }
-
-    const board = Object.values(this.boards).find(board => board.getLane(laneId));
-    const lane = board?.getLane(laneId);
-    if (!lane) {
-      throw new Error("Lane not exist");
+    let card = this.player1Board.getCardById(cardId);
+    if (!card) {
+      card = this.player2Board.getCardById(cardId);
     }
-    const card = lane.getCardById(cardId);
+
     if (!card) {
       throw new Error("Card don't exist");
     }
@@ -342,14 +331,14 @@ export class Game {
     }, 5000);
   }
 
-  public flipCardAction(playerId: Id, cardId: Id, laneId: Id) {
+  public flipCardAction(playerId: Id, cardId: Id, laneIndex: number) {
     this.validatePlayerTurn(playerId);
     if (this.currentStatus !== TurnStatus.WAITING_CHOOSE_FLIP_ORDER) {
       throw new Error("Action not permited");
     }
 
     const board = this.boards[playerId];
-    const lane = board.getLane(laneId);
+    const lane = board.lanes[laneIndex];
     const cardToFlip = lane.getCardById(cardId);
     if (!cardToFlip) {
       throw new Error("Card not found");
@@ -363,14 +352,14 @@ export class Game {
     }
   }
 
-  public reactivateCard(playerId: Id, cardId: Id, laneId: Id) {
+  public reactivateCard(playerId: Id, cardId: Id, laneIndex: number) {
     this.validatePlayerTurn(playerId);
     if (this.currentStatus !== TurnStatus.WAITING_CHOOSE_REACTIVATION_ORDER) {
       throw new Error("Action not permited");
     }
 
     const board = this.boards[playerId];
-    const lane = board.getLane(laneId);
+    const lane = board.lanes[laneIndex];
     const cardToEmpower = lane.getCardById(cardId);
     if (!cardToEmpower) {
       throw new Error("Card not found");
@@ -385,14 +374,14 @@ export class Game {
     }
   }
 
-  public moveCard(playerId: Id, fromLaneId: Id, cardId: Id, toLaneId: Id) {
+  public moveCard(playerId: Id, fromLaneIndex: number, cardId: Id, toLaneIndex: number) {
     this.validatePlayerTurn(playerId);
     if (this.currentStatus !== TurnStatus.WAITING_CHOOSE_CARD_TO_MOVE) {
       throw new Error("Can't do this action");
     }
 
     const board = this.boards[playerId];
-    board.moveCard(cardId, fromLaneId, toLaneId);
+    board.moveCard(cardId, fromLaneIndex, toLaneIndex);
   }
 
   public getPlayerState(playerId: Id): PlayerState {
@@ -406,37 +395,19 @@ export class Game {
       I: {
         playerId: playerId,
         hand: playerHand.getCards(),
-        board: [
-          {
-            baseCard: this.getOpponentCard(playerBoard.firstLane().baseCard),
-            cards: playerBoard.firstLane().cards,
-          },
-          {
-            baseCard: this.getOpponentCard(playerBoard.secondLane().baseCard),
-            cards: playerBoard.secondLane().cards,
-          },
-          {
-            baseCard: this.getOpponentCard(playerBoard.thirdLane().baseCard),
-            cards: playerBoard.thirdLane().cards,
-          },
-        ],
+        board: playerBoard.lanes.map(lane => ({
+          baseCard: this.getOpponentCard(lane.baseCard),
+          cards: lane.cards,
+          isFreezed: lane.isFreezed,
+        })) as [MyLane, MyLane, MyLane],
       },
       opponent: {
         hand: opponentHand.handSize(),
-        board: [
-          {
-            baseCard: this.getOpponentCard(opponentBoard.firstLane().baseCard),
-            cards: opponentBoard.firstLane().cards.map((card) => this.getOpponentCard(card)),
-          },
-          {
-            baseCard: this.getOpponentCard(opponentBoard.secondLane().baseCard),
-            cards: opponentBoard.secondLane().cards.map((card) => this.getOpponentCard(card)),
-          },
-          {
-            baseCard: this.getOpponentCard(opponentBoard.thirdLane().baseCard),
-            cards: opponentBoard.thirdLane().cards.map((card) => this.getOpponentCard(card)),
-          },
-        ],
+        board: opponentBoard.lanes.map(lane => ({
+          baseCard: this.getOpponentCard(lane.baseCard),
+          cards: lane.cards.map(card => this.getOpponentCard(card)),
+          isFreezed: lane.isFreezed,
+        })) as [OpponentLane, OpponentLane, OpponentLane],
       },
       turnInfo: {
         isMyTurn: this.currentPlayer === playerId,
@@ -467,20 +438,26 @@ export class Game {
     this.futureActions[turn] = actions;
   }
 
-  private getOpponentCard(card: Card | null) {
+  private getOpponentCard(card: Card | null): Card | HiddenCard {
     if (card === null) {
-      return null;
+      return card;
     }
     if (card.shouldBeLookedBy4Power) {
       return card;
     }
     if (card.isBaseCard) {
-      return card.id;
+      return {
+        id: card.id,
+        damageReceived: card.damageReceived,
+      };
     }
     if (card.isFlipped) {
       return card;
     }
-    return card.id;
+    return {
+      id: card.id,
+      damageReceived: card.damageReceived,
+    };
   }
 }
 

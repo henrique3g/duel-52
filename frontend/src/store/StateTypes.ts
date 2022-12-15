@@ -1,4 +1,9 @@
 
+export type HiddenCard = {
+  id: string;
+  damageReceived: number;
+};
+
 export type Card = {
   id: string;
   cardType: CardType;
@@ -16,15 +21,15 @@ export type GameState = {
     hand: Card[],
     board: [
       {
-        baseCard: Card | string | null,
+        baseCard: Card | HiddenCard | null,
         cards: Card[],
       },
       {
-        baseCard: Card | string | null,
+        baseCard: Card | HiddenCard | null,
         cards: Card[],
       },
       {
-        baseCard: Card | string | null,
+        baseCard: Card | HiddenCard | null,
         cards: Card[],
       },
     ],
@@ -33,16 +38,16 @@ export type GameState = {
     hand: number,
     board: [
       {
-        baseCard: Card | string | null,
-        cards: Array<Card | string>,
+        baseCard: Card | HiddenCard | null,
+        cards: Array<Card | HiddenCard>,
       },
       {
-        baseCard: Card | string | null,
-        cards: Array<Card | string>,
+        baseCard: Card | HiddenCard | null,
+        cards: Array<Card | HiddenCard>,
       },
       {
-        baseCard: Card | string | null,
-        cards: Array<Card | string>,
+        baseCard: Card | HiddenCard | null,
+        cards: Array<Card | HiddenCard>,
       },
     ],
   },
@@ -68,18 +73,18 @@ export enum TurnStatus {
 }
 
 export enum CardType {
-    A = 'a',
-    Two = '2',
-    Three = '3',
-    Four = '4',
-    Five = '5',
-    Six = '6',
-    Seven = '7',
-    Eight = '8',
-    Nine = '9',
-    Ten = '10',
-    J = 'j',
-    Q = 'q',
-    K = 'k'
+  A = 'a',
+  Two = '2',
+  Three = '3',
+  Four = '4',
+  Five = '5',
+  Six = '6',
+  Seven = '7',
+  Eight = '8',
+  Nine = '9',
+  Ten = '10',
+  J = 'j',
+  Q = 'q',
+  K = 'k'
 }
 

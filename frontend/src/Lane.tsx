@@ -1,5 +1,6 @@
-import { CardElement } from "./Card";
+import { CardElement, isHiddenCard } from "./Card";
 import { useAppSelector } from "./store";
+import { Card } from "./store/StateTypes";
 
 type LaneProps = {
   number: number;
@@ -21,7 +22,7 @@ export const Lane = ({ number, className }: LaneProps) => {
 
       <div className="mb-1 flex gap-1">
         {opponentCards.map(card => (
-          <CardElement card={card} key={typeof card === 'string' ? card : card.id} isHidden={typeof card === 'string' ? true : !card.isFlipped} />
+          <CardElement card={card} key={card.id} isHidden={isHiddenCard(card) ? true : !(card as Card).isFlipped} />
         ))}
       </div>
 

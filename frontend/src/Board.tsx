@@ -46,6 +46,7 @@ export const Board = () => {
           <img alt='Duel 52 logo' src={logo} className="w-1/5 opacity-50" />
         </div>
 
+        
         <Hand handSize={gameState.opponent.hand} className="mt-2 w-3/4" />
 
         <div className='flex flex-1 my-2 w-3/4'>

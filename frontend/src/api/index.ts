@@ -13,3 +13,4 @@ export function endTurn() {
 export function newGame() {
   return api.post('/game');
 }
+

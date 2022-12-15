@@ -1,4 +1,4 @@
-import { Card, CardType } from './store/StateTypes';
+import { Card, CardType, HiddenCard } from './store/StateTypes';
 import Back from './svg/back.svg';
 import A from './svg/a.svg';
 import Two from './svg/2.svg';
@@ -16,7 +16,7 @@ import K from './svg/k.svg';
 import { ReactElement, useState } from 'react';
 
 type CardProps = {
-  card: Card | string;
+  card: Card | HiddenCard;
   isHidden?: boolean;
   className?: string;
 };
@@ -38,21 +38,26 @@ const CardImages = {
   [CardType.K]: K,
 };
 
+export function isHiddenCard(card: Card | HiddenCard): boolean {
+  return !Object.hasOwn(card, 'cardType');
+}
+
 export const CardElement = ({ card, className, isHidden = false }: CardProps) => {
   const [isMouseOverCard, setIsMouseOverCard] = useState(false);
   let cardImage: ReactElement;
-  if (typeof card === 'string' || (isHidden && !isMouseOverCard)) {
+  if (isHiddenCard(card) || (isHidden && !isMouseOverCard)) {
     cardImage = <img alt='A card face down' src={CardImages.Back} className='w-full h-full' />;
   } else {
-    cardImage = <img alt={`A card of playing card of value ${card.cardType}`} src={CardImages[card.cardType]} className='w-full h-full' />;
+    const localCard = card as Card;
+    cardImage = <img alt={`A card of playing card of value ${localCard.cardType}`} src={CardImages[localCard.cardType]} className='w-full h-full' />;
   }
 
   function changeOverState(status: boolean) {
     return () => setIsMouseOverCard(status);
   }
 
-  return <div style={{borderWidth: 1}} onMouseOut={changeOverState(false)} onMouseOver={changeOverState(true)} className={`border-gray-700 border-solid w-20 rounded-md overflow-hidden ${className}`}>
-    { cardImage }
+  return <div style={{ borderWidth: 1 }} onMouseOut={changeOverState(false)} onMouseOver={changeOverState(true)} className={`border-gray-700 border-solid w-20 rounded-md overflow-hidden ${className}`}>
+    {cardImage}
   </div>;
 }
 

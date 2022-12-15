@@ -1,15 +1,17 @@
 import { Card } from './Card';
-import { randomId, Id } from './MainState';
+import { Id } from './MainState';
 
 export class Lane {
   baseCard: Card | null = null;
   cards: Card[] = [];
-  id = randomId();
   isWon = false;
   isFreezed = false;
 
+  constructor(public index: number) { }
+
   addCard(card: Card) {
     this.cards.push(card);
+    card.setLane(this);
   }
 
   setBaseCard(card: Card) {
@@ -27,7 +29,12 @@ export class Lane {
       throw new Error("Card not exists");
     }
     const [removedCard] = this.cards.splice(cardIndex, 1);
+    removedCard.lane = null;
     return removedCard;
+  }
+
+  isEmpty() {
+    return this.cards.length === 0 && this.baseCard === null;
   }
 }
 

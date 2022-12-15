@@ -1,12 +1,17 @@
 import { Card } from './Card';
 import { CardType } from './CardType';
+import { Game } from './Game';
 
 
 export class DrawPile {
   cards: Card[];
 
   constructor() {
-    this.cards = allCards();
+    this.cards = [];
+  }
+
+  fillCards(game: Game) {
+    this.cards = allCards(game);
   }
 
   shuffle(): void {
@@ -41,60 +46,60 @@ export class DrawPile {
   }
 }
 
-export function allCards() {
+export function allCards(game: Game): Card[] {
   return [
-    new Card(CardType.A),
-    new Card(CardType.A),
-    new Card(CardType.A),
-    new Card(CardType.A),
-    new Card(CardType.Two),
-    new Card(CardType.Two),
-    new Card(CardType.Two),
-    new Card(CardType.Two),
-    new Card(CardType.Three),
-    new Card(CardType.Three),
-    new Card(CardType.Three),
-    new Card(CardType.Three),
-    new Card(CardType.Four),
-    new Card(CardType.Four),
-    new Card(CardType.Four),
-    new Card(CardType.Four),
-    new Card(CardType.Five),
-    new Card(CardType.Five),
-    new Card(CardType.Five),
-    new Card(CardType.Five),
-    new Card(CardType.Six),
-    new Card(CardType.Six),
-    new Card(CardType.Six),
-    new Card(CardType.Six),
-    new Card(CardType.Seven),
-    new Card(CardType.Seven),
-    new Card(CardType.Seven),
-    new Card(CardType.Seven),
-    new Card(CardType.Eight),
-    new Card(CardType.Eight),
-    new Card(CardType.Eight),
-    new Card(CardType.Eight),
-    new Card(CardType.Nine),
-    new Card(CardType.Nine),
-    new Card(CardType.Nine),
-    new Card(CardType.Nine),
-    new Card(CardType.Ten),
-    new Card(CardType.Ten),
-    new Card(CardType.Ten),
-    new Card(CardType.Ten),
-    new Card(CardType.J),
-    new Card(CardType.J),
-    new Card(CardType.J),
-    new Card(CardType.J),
-    new Card(CardType.Q),
-    new Card(CardType.Q),
-    new Card(CardType.Q),
-    new Card(CardType.Q),
-    new Card(CardType.K),
-    new Card(CardType.K),
-    new Card(CardType.K),
-    new Card(CardType.K),
+    new Card(game, CardType.A),
+    new Card(game, CardType.A),
+    new Card(game, CardType.A),
+    new Card(game, CardType.A),
+    new Card(game, CardType.Two),
+    new Card(game, CardType.Two),
+    new Card(game, CardType.Two),
+    new Card(game, CardType.Two),
+    new Card(game, CardType.Three),
+    new Card(game, CardType.Three),
+    new Card(game, CardType.Three),
+    new Card(game, CardType.Three),
+    new Card(game, CardType.Four),
+    new Card(game, CardType.Four),
+    new Card(game, CardType.Four),
+    new Card(game, CardType.Four),
+    new Card(game, CardType.Five),
+    new Card(game, CardType.Five),
+    new Card(game, CardType.Five),
+    new Card(game, CardType.Five),
+    new Card(game, CardType.Six),
+    new Card(game, CardType.Six),
+    new Card(game, CardType.Six),
+    new Card(game, CardType.Six),
+    new Card(game, CardType.Seven),
+    new Card(game, CardType.Seven),
+    new Card(game, CardType.Seven),
+    new Card(game, CardType.Seven),
+    new Card(game, CardType.Eight),
+    new Card(game, CardType.Eight),
+    new Card(game, CardType.Eight),
+    new Card(game, CardType.Eight),
+    new Card(game, CardType.Nine),
+    new Card(game, CardType.Nine),
+    new Card(game, CardType.Nine),
+    new Card(game, CardType.Nine),
+    new Card(game, CardType.Ten),
+    new Card(game, CardType.Ten),
+    new Card(game, CardType.Ten),
+    new Card(game, CardType.Ten),
+    new Card(game, CardType.J),
+    new Card(game, CardType.J),
+    new Card(game, CardType.J),
+    new Card(game, CardType.J),
+    new Card(game, CardType.Q),
+    new Card(game, CardType.Q),
+    new Card(game, CardType.Q),
+    new Card(game, CardType.Q),
+    new Card(game, CardType.K),
+    new Card(game, CardType.K),
+    new Card(game, CardType.K),
+    new Card(game, CardType.K),
   ];
 }
 

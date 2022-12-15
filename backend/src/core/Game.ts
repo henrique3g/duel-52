@@ -1,7 +1,6 @@
-import { Card } from './Card';
+import { Card, CardJson } from './Card';
 import { CardType } from './CardType';
 import { DrawPile } from './DrawPile';
-import { Lane } from './Lane';
 import { Player } from './Player';
 import { PlayerBoard } from './PlayerBoard';
 import { PlayerHand } from './PlayerHand';
@@ -14,21 +13,21 @@ type HiddenCard = {
 };
 
 type MyLane = {
-  baseCard: Card | HiddenCard;
-  cards: Card[];
+  baseCard: CardJson | HiddenCard;
+  cards: CardJson[];
   isFreezed: boolean;
 };
 
 type OpponentLane = {
-  baseCard: Card | HiddenCard,
-  cards: Array<Card | HiddenCard>,
+  baseCard: CardJson | HiddenCard,
+  cards: Array<CardJson | HiddenCard>,
   isFreezed: boolean,
 };
 
 export type PlayerState = {
   I: {
     playerId: Id,
-    hand: Card[],
+    hand: CardJson[],
     board: [MyLane, MyLane, MyLane],
   };
   opponent: {
@@ -57,25 +56,24 @@ export enum TurnStatus {
 }
 
 export class Game {
-  private discardPile: Card[] = [];
-  private currentPlayer = this.player1.id;
-  private remainingActions = 3;
+  public discardPile: Card[] = [];
+  public currentPlayer = this.player1.id;
+  public remainingActions = 3;
   public boards: Record<Id, PlayerBoard> = {};
   public hands: Record<Id, PlayerHand> = {};
   public currentStatus = TurnStatus.WAITING_NEXT_ACTION;
   public turnCounter = 1;
 
   private futureActions: Record<number, Array<() => void>> = {};
-  private cardToSecondAttack: null | Id = null;
 
   constructor(
-    private drawPile: DrawPile,
-    private player1: Player,
-    private player2: Player,
-    private player1Hand: PlayerHand,
-    private player2Hand: PlayerHand,
-    private player1Board: PlayerBoard,
-    private player2Board: PlayerBoard
+    public drawPile: DrawPile,
+    public player1: Player,
+    public player2: Player,
+    public player1Hand: PlayerHand,
+    public player2Hand: PlayerHand,
+    public player1Board: PlayerBoard,
+    public player2Board: PlayerBoard
   ) {
     this.boards[player1.id] = player1Board;
     this.boards[player2.id] = player2Board;
@@ -83,7 +81,8 @@ export class Game {
     this.hands[player2.id] = player2Hand;
   }
 
-  public startGame() {
+  startGame() {
+    this.drawPile.fillCards(this);
     this.drawPile.shuffle();
     const draw = () => this.drawPile.draw();
 
@@ -101,16 +100,16 @@ export class Game {
     if (playerId !== this.currentPlayer) {
       throw new Error("Player can't play at opponent turn");
     }
+  }
+
+  public validateRemainingActions() {
     if (this.remainingActions === 0) {
       throw new Error("Player can't play");
     }
   }
 
   public endTurn(playerId: Id) {
-    // this.validatePlayerTurn(playerId);
-    if (playerId !== this.currentPlayer) {
-      throw new Error("Player can't play at opponent turn");
-    }
+    this.validatePlayerTurn(playerId);
 
     if (this.currentPlayer === this.player1.id) {
       this.currentPlayer = this.player2.id;
@@ -128,6 +127,7 @@ export class Game {
 
   public setCard(playerId: Id, cardId: Id, laneIndex: number) {
     this.validatePlayerTurn(playerId);
+    this.validateRemainingActions();
 
     const board = this.boards[playerId];
     const hand = this.hands[playerId];
@@ -145,152 +145,81 @@ export class Game {
 
   public flipCard(playerId: Id, cardId: Id, laneIndex: number) {
     this.validatePlayerTurn(playerId);
+    this.validateRemainingActions();
 
-    const board = this.boards[playerId];
+    const board = this.getPlayerBoard();
     const lane = board.lanes[laneIndex];
-    if (lane.isWon) {
-      return;
-    }
     const possibleCard = lane.getCardById(cardId);
     if (!possibleCard) {
       throw new Error();
     }
     const card = possibleCard;
-    if (lane.isFreezed && card.cardType !== CardType.Nine) {
+    if (card.isFlipped) {
       return;
     }
+    this.remainingActions -= 1;
     card.flip();
-    this.remainingActions -= 1;
-    this.activateCardPower(card, lane);
   }
 
-  private activateCardPower(card: Card, lane: Lane) {
-    if (card.cardType === CardType.A) {
-      this.remainingActions += 1;
-      return;
-    }
-    if (card.cardType === CardType.Two && !this.drawPile.isEmpty()) {
-      this.drawCard();
-      this.currentStatus = TurnStatus.WAITING_CHOOSE_DISCAR_CARD;
-      return;
-    }
-
-    if (card.cardType === CardType.Four) {
-      this.currentStatus = TurnStatus.WAITING_CHOOSE_CARD_TO_SEE;
-      return;
-    }
-
-    if (card.cardType === CardType.Five) {
-      this.currentStatus = TurnStatus.WAITING_CHOOSE_FLIP_ORDER;
-      return;
-    }
-
-    if (card.cardType === CardType.Six) {
-      lane.isFreezed = true;
-      this.addFutureAction(this.turnCounter + 2, () => {
-        lane.isFreezed = false;
-      });
-      return;
-    }
-
-    if (card.cardType === CardType.Seven) {
-      lane.cards.forEach(card => card.damageReceived = 0);
-      return;
-    }
-
-    if (card.cardType === CardType.Q) {
-      this.currentStatus = TurnStatus.WAITING_CHOOSE_CARD_TO_MOVE;
-      return;
-    }
-
-    if (card.cardType === CardType.K) {
-      this.currentStatus = TurnStatus.WAITING_CHOOSE_REACTIVATION_ORDER;
-      return;
-    }
+  public getPlayerBoard(): PlayerBoard {
+    return this.boards[this.currentPlayer];
   }
 
-  public attackCard(playerId: Id, laneIndex: number, attackerId: Id, attackedId: Id) {
+  public getPlayerHand(): PlayerHand {
+    return this.hands[this.currentPlayer];
+  }
+
+  public getOpponentBoard() {
+    const opponentId = Object.keys(this.boards).find(playerId => playerId !== this.currentPlayer);
+    return this.boards[opponentId];
+  }
+
+  public attackCard(playerId: Id, laneIndex: number, attackerId: Id, attackedId: Id, secondAttackedId?: Id) {
     this.validatePlayerTurn(playerId);
+    this.validateRemainingActions();
 
-    const opponentId = Object.keys(this.boards).find(id => playerId !== id)!;
-    const attackerBoard = this.boards[playerId];
+    const attackerBoard = this.getPlayerBoard();
     const attackerLane = attackerBoard.lanes[laneIndex];
     const attackerCard = attackerLane.getCardById(attackerId);
 
     if (!attackerCard) {
       throw new Error("Attacker card not found");
     }
-    if (attackerLane.isFreezed && attackerCard.cardType !== CardType.Nine) {
-      return;
+    if (!attackerCard.canAttack()) {
+      throw new Error("Card can't attack");
     }
 
-    const attackedBoard = this.boards[opponentId];
+    const attackedBoard = this.getOpponentBoard();
     const attackedLane = attackedBoard.lanes[laneIndex];
     const attackedCard = attackedLane.getCardById(attackedId);
+
 
     if (!attackedCard) {
       throw new Error("Attacked card not found");
     }
 
-    attackerCard.attack(attackedCard);
-    if (attackerCard.cardType === CardType.Ten && attackedCard.cardType !== CardType.Nine) {
-      this.currentStatus = TurnStatus.WAITING_SECOND_CARD_TO_ATTACK;
-      this.cardToSecondAttack = attackerCard.id;
-    }
-    if (attackedCard.isDied()) {
-      if (attackedCard.cardType === CardType.Three && !attackedCard.isFlipped) {
-        attackedCard.damageReceived = 0;
-        attackedCard.isFlipped = true;
-      } else {
-        const diedCard = attackedLane.removeCard(attackedId);
-        this.discardPile.push(diedCard);
-        if (this.drawPile.isEmpty() && attackedLane.cards.length === 0) {
-          attackerLane.isWon = true;
-        }
-      }
-    }
-    if (attackerCard.isDied()) {
-      const diedCard = attackerLane.removeCard(attackerId);
-      this.discardPile.push(diedCard);
-      if (this.drawPile.isEmpty() && attackerLane.cards.length === 0) {
-        attackedLane.isWon = true;
-      }
+    const secondAttacked = attackedLane.getCardById(secondAttackedId);
+    attackerCard.attack(attackedCard, secondAttacked);
+
+    this.verifyIsDiedCard(attackerCard);
+    this.verifyIsDiedCard(attackedCard);
+    if (secondAttacked) {
+      this.verifyIsDiedCard(secondAttacked);
     }
     this.remainingActions -= 1;
-
   }
 
-  public doSecondAttackOf10(playerId: Id, laneIndex: number, attackerId: Id, attackedId: Id) {
-    this.validatePlayerTurn(playerId);
-    if (this.cardToSecondAttack !== attackerId) {
-      throw new Error("Some error occurred");
+  private verifyIsDiedCard(card: Card) {
+    if (card.isDied()) {
+      card.lane.removeCard(card.id);
+      this.discardPile.push(card);
+      if (this.drawPile.isEmpty() && card.lane.isEmpty()) {
+        card.lane.isWon = true;
+      }
     }
-
-    const opponentId = Object.keys(this.boards).find(id => playerId !== id)!;
-    const attackerBoard = this.boards[playerId];
-    const attackerLane = attackerBoard.lanes[laneIndex];
-    const attackerCard = attackerLane.getCardById(attackerId);
-
-    if (!attackerCard) {
-      throw new Error("Attacker card not found");
-    }
-
-    const attackedBoard = this.boards[opponentId];
-    const attackedLane = attackedBoard.lanes[laneIndex];
-    const attackedCard = attackedLane.getCardById(attackedId);
-
-    if (!attackedCard) {
-      throw new Error("Attacked card not found");
-    }
-    if (attackedCard.cardType === CardType.Nine) {
-      return;
-    }
-
-    attackerCard.attack(attackedCard);
-    this.cardToSecondAttack = null;
   }
 
-  private drawCard() {
+  public drawCard() {
     const card = this.drawPile.draw();
     if (card) {
       const hand = this.hands[this.currentPlayer];
@@ -307,7 +236,7 @@ export class Game {
       throw new Error("Only can discard a card when flip a 2 card");
     }
 
-    const hand = this.hands[playerId];
+    const hand = this.getPlayerHand();
     const discardedCard = hand.discardCard(cardId);
     this.discardPile.push(discardedCard);
   }
@@ -344,7 +273,6 @@ export class Game {
       throw new Error("Card not found");
     }
     cardToFlip.flip();
-    this.activateCardPower(cardToFlip, lane);
     const cards = lane.cards;
     const cardsNotFlipped = cards.filter(card => card.isFlipped);
     if (cardsNotFlipped.length === 0) {
@@ -364,7 +292,7 @@ export class Game {
     if (!cardToEmpower) {
       throw new Error("Card not found");
     }
-    this.activateCardPower(cardToEmpower, lane);
+    cardToEmpower.activateCardPower();
     cardToEmpower.wasRempowered = true;
     const cards = lane.cards;
     const cardsNotEmpowered = cards.filter(card => card.isFlipped && card.cardType !== CardType.K && !card.wasRempowered);
@@ -394,10 +322,10 @@ export class Game {
     return {
       I: {
         playerId: playerId,
-        hand: playerHand.getCards(),
+        hand: this.getExportCards(playerHand.getCards()),
         board: playerBoard.lanes.map(lane => ({
           baseCard: this.getOpponentCard(lane.baseCard),
-          cards: lane.cards,
+          cards: this.getExportCards(lane.cards),
           isFreezed: lane.isFreezed,
         })) as [MyLane, MyLane, MyLane],
       },
@@ -427,9 +355,18 @@ export class Game {
     }
   }
 
-  private runFutureAction() {
+  public runFutureAction() {
     const actions = this.futureActions[this.turnCounter] || [];
     actions.forEach(action => action());
+  }
+
+  public freezeLane(laneIndex: number) {
+    const lane = this.getOpponentBoard().lanes[laneIndex];
+    lane.isFreezed = true;
+    this.addFutureAction(this.turnCounter + 2, () => {
+      const lane = this.getOpponentBoard().lanes[laneIndex];
+      lane.isFreezed = false;
+    });
   }
 
   private addFutureAction(turn: number, action: () => void) {
@@ -438,12 +375,16 @@ export class Game {
     this.futureActions[turn] = actions;
   }
 
-  private getOpponentCard(card: Card | null): Card | HiddenCard {
+  private getExportCards(cards: Card[]): CardJson[] {
+    return cards.map(card => card.toJson());
+  }
+
+  private getOpponentCard(card: Card | null): CardJson | HiddenCard {
     if (card === null) {
       return card;
     }
     if (card.shouldBeLookedBy4Power) {
-      return card;
+      return card.toJson();
     }
     if (card.isBaseCard) {
       return {
@@ -452,7 +393,7 @@ export class Game {
       };
     }
     if (card.isFlipped) {
-      return card;
+      return card.toJson();
     }
     return {
       id: card.id,

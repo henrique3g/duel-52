@@ -16,10 +16,10 @@ export type CardJson = {
 };
 
 export class Card {
+  public id = randomId();
   public isFlipped = false;
   public damageReceived = 0;
   public isBaseCard = false;
-  public id = randomId();
   public shouldBeLookedBy4Power = false;
   public wasRempowered = false;
   public alreadyAttacked = false;
@@ -27,16 +27,33 @@ export class Card {
 
   public lane?: Lane;
 
+  private freezedTurn: number = 0;
+  private flipTurn = 0;
+  private usedFirstAttack = false;
+
   constructor(private game: Game, public cardType: CardType) { }
 
   flip() {
     this.isFlipped = true;
     this.activateCardPower();
+    if (this.cardType === CardType.A) {
+      this.flipTurn = this.game.turnCounter;
+    }
   }
 
   attack(attackedCard: Card, secondAttacked?: Card) {
     if (!this.isFlipped) {
       throw new Error("A card face down can't attack");
+    }
+
+    if (this.alreadyAttacked) {
+      throw new Error("This was attacked");
+    }
+
+    this.alreadyAttacked = true;
+
+    if (this.cardType === CardType.A && !this.usedFirstAttack && this.flipTurn === this.game.turnCounter) {
+      this.alreadyAttacked = false;
     }
 
     if (this.cardType === CardType.Nine && attackedCard.cardType === CardType.J) {
@@ -48,7 +65,7 @@ export class Card {
       attackedCard.doDamage(1);
       return;
     }
-    if (this.cardType === CardType.Ten && secondAttacked?.cardType !== CardType.Nine) {
+    if (this.cardType === CardType.Ten && attackedCard.cardType !== CardType.Nine && secondAttacked?.cardType !== CardType.Nine) {
       secondAttacked.doDamage(1);
       if (secondAttacked.cardType === CardType.Eight) {
         this.doDamage(1);
@@ -95,7 +112,9 @@ export class Card {
 
     if (this.cardType === CardType.Six) {
       this.lane.isFreezed = true;
-      this.game.freezeLane(this.lane.index);
+      const laneIndex = this.lane.index;
+      const laneToFreeze = this.game.getOpponentBoard().lanes[laneIndex];
+      laneToFreeze.cards.forEach(card => card.freeze());
       return;
     }
 
@@ -115,7 +134,21 @@ export class Card {
     }
   }
 
-  isDied() {
+  private freeze(): void {
+    if (this.cardType === CardType.Nine) {
+      return;
+    }
+    this.isFreezed = true;
+    const gameTurn = this.game.turnCounter;
+    this.freezedTurn = gameTurn;
+    this.game.addFutureAction(gameTurn + 2, () => {
+      if (this.freezedTurn === gameTurn) {
+        this.isFreezed = false;
+      }
+    });
+  }
+
+  public isDied() {
     if (this.cardType === CardType.J && this.isFlipped && this.damageReceived >= 3) {
       return true;
     }
@@ -133,7 +166,7 @@ export class Card {
     return false;
   }
 
-  toJson(): CardJson {
+  public toJson(): CardJson {
     return {
       isFlipped: this.isFlipped,
       cardType: this.cardType,

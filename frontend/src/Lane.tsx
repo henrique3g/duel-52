@@ -48,6 +48,17 @@ export const Lane = ({ index: number, className }: LaneProps) => {
         })
       return;
     }
+    if (turnInfo.currentState === TurnStatus.WAITING_CHOOSE_FLIP_ORDER) {
+      api.selectCardToFlip(card.id)
+        .then(response => {
+          console.log({ flipCardAbilityResponse: response.data });
+          dispatch(GameActions.updateState(response.data));
+        })
+        .catch(error => {
+          console.log({ flipCardAbilityError: error });
+        })
+      return;
+    }
     dispatch(GameActions.selectBoardCard(card))
   };
 

@@ -275,13 +275,13 @@ export class Game {
     if (!cardToFlip) {
       throw new Error("Card not found");
     }
-    cardToFlip.flip();
     const cards = cardToFlip.lane.cards;
     const cardsNotFlipped = cards.filter(card => card.isFlipped);
 
-    if (cardsNotFlipped.length === 0) {
+    if (cardsNotFlipped.length === 1) {
       this.currentStatus = TurnStatus.WAITING_NEXT_ACTION;
     }
+    cardToFlip.flip();
   }
 
   public reactivateCard(playerId: Id, cardId: Id) {
@@ -295,15 +295,15 @@ export class Game {
     if (!cardToEmpower) {
       throw new Error("Card not found");
     }
-    cardToEmpower.activateCardPower();
-    cardToEmpower.wasRempowered = true;
     const cards = cardToEmpower.lane.cards;
     const cardsNotEmpowered = cards.filter(card => card.isFlipped && card.cardType !== CardType.K && !card.wasRempowered);
 
-    if (cardsNotEmpowered.length === 0) {
+    if (cardsNotEmpowered.length === 1) {
       this.currentStatus = TurnStatus.WAITING_NEXT_ACTION;
       cards.forEach(card => card.wasRempowered = false);
     }
+    cardToEmpower.activateCardPower();
+    cardToEmpower.wasRempowered = true;
   }
 
   public moveCard(playerId: Id, fromLaneIndex: number, cardId: Id, toLaneIndex: number) {

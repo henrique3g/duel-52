@@ -107,6 +107,9 @@ export class Card {
     }
 
     if (this.cardType === CardType.Five) {
+      if (this.lane.cards.filter(card => !card.isFlipped).length <= 1) {
+        return;
+      }
       this.game.currentStatus = TurnStatus.WAITING_CHOOSE_FLIP_ORDER;
       return;
     }
@@ -125,11 +128,17 @@ export class Card {
     }
 
     if (this.cardType === CardType.Q) {
+      if (this.game.player1Board.lanes.filter(lane => lane.index !== this.lane.index && lane.cards.length >= 1).length <= 1) {
+        return;
+      }
       this.game.currentStatus = TurnStatus.WAITING_CHOOSE_CARD_TO_MOVE;
       return;
     }
 
     if (this.cardType === CardType.K) {
+      if (this.lane.cards.filter(card => card.isFlipped).length <= 1) {
+        return;
+      }
       this.game.currentStatus = TurnStatus.WAITING_CHOOSE_REACTIVATION_ORDER;
       return;
     }

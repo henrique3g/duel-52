@@ -35,3 +35,7 @@ export function selectCardToFlip(cardId: string | null) {
   return api.post('/game/choose-card-to-flip', { playerId: store.getState().game.gameState.I.playerId, cardId });
 }
 
+export function selectCardToReactivate(cardId: string | null) {
+  return api.post('/game/choose-card-to-reactivate', { playerId: store.getState().game.gameState.I.playerId, cardId });
+}
+

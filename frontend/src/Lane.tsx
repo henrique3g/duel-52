@@ -59,6 +59,17 @@ export const Lane = ({ index: number, className }: LaneProps) => {
         })
       return;
     }
+    if (turnInfo.currentState === TurnStatus.WAITING_CHOOSE_REACTIVATION_ORDER) {
+      api.selectCardToReactivate(card.id)
+        .then(response => {
+          console.log({ reactivateCardAbilityResponse: response.data });
+          dispatch(GameActions.updateState(response.data));
+        })
+        .catch(error => {
+          console.log({ reactivateCardAbilityError: error });
+        })
+      return;
+    }
     dispatch(GameActions.selectBoardCard(card))
   };
 

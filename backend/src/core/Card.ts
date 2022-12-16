@@ -57,18 +57,18 @@ export class Card {
       this.alreadyAttacked = false;
     }
 
-    if (this.cardType === CardType.Nine && attackedCard.cardType === CardType.J) {
+    if (this.cardType === CardType.Nine && attackedCard.cardType === CardType.J && attackedCard.isFlipped) {
       attackedCard.doDamage(2);
       return;
     }
-    if (attackedCard.cardType === CardType.Eight && this.cardType !== CardType.Nine) {
+    if (attackedCard.cardType === CardType.Eight && this.cardType !== CardType.Nine && attackedCard.isFlipped) {
       this.doDamage(1);
       attackedCard.doDamage(1);
       return;
     }
     if (this.cardType === CardType.Ten && attackedCard.cardType !== CardType.Nine && secondAttacked?.cardType !== CardType.Nine) {
       secondAttacked.doDamage(1);
-      if (secondAttacked.cardType === CardType.Eight) {
+      if (secondAttacked.cardType === CardType.Eight && secondAttacked.isFlipped) {
         this.doDamage(1);
       }
     }
@@ -84,7 +84,7 @@ export class Card {
   }
 
   public canAttack(): boolean {
-    if (this.cardType = CardType.Nine) {
+    if (this.cardType === CardType.Nine) {
       return this.isFlipped;
     }
     return this.isFlipped && !this.isFreezed;

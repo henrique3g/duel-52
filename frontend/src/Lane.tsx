@@ -23,7 +23,8 @@ export const Lane = ({ index: number, className }: LaneProps) => {
     if (currentAction !== Actions.SET_CARD) {
       return;
     }
-    api.setCard(selectedCard!, number)
+    console.log({selectedCard})
+    api.setCard(selectedCard!.id, number)
       .then(response => {
         dispatch(GameActions.clearSelected());
         dispatch(GameActions.updateState(response.data));
@@ -88,6 +89,9 @@ export const Lane = ({ index: number, className }: LaneProps) => {
           console.log({ seeCardError: error });
         })
       return;
+    }
+    if (turnInfo.currentState === TurnStatus.WAITING_NEXT_ACTION && currentAction === Actions.ATTACK) {
+      dispatch(GameActions.addAttacked(card));
     }
   };
 

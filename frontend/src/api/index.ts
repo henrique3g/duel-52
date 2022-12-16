@@ -18,9 +18,12 @@ export function setCard(cardId: string, laneIndex: number) {
   return api.post('/game/set-card', { playerId: store.getState().game.gameState.I.playerId, cardId, laneIndex });
 }
 
-
 export function flipCard(cardId: string | null) {
   return api.post('/game/flip-card', { playerId: store.getState().game.gameState.I.playerId, cardId });
+}
+
+export function attack(attackerId: string | null, attackedId: string | null, secondAttackedId?: string) {
+  return api.post('/game/attack', { playerId: store.getState().game.gameState.I.playerId, attackerId, attackedId, secondAttackedId });
 }
 
 export function discardCard(cardId: string | null) {

@@ -46,7 +46,7 @@ export function isHiddenCard(card: Card | HiddenCard): boolean {
 }
 
 export const CardElement = ({ card, onClick, className, isHidden = false }: CardProps) => {
-  const { selectedCard } = useAppSelector(state => state.game);
+  const { selectedCard, attackedCard, secondAttacked } = useAppSelector(state => state.game);
   const [isMouseOverCard, setIsMouseOverCard] = useState(false);
   let cardImage: ReactElement;
   if (isHiddenCard(card) || (isHidden && !isMouseOverCard)) {
@@ -64,12 +64,17 @@ export const CardElement = ({ card, onClick, className, isHidden = false }: Card
   if (!isHiddenCard(card) && (card as Card).cardType === CardType.J && card.damageReceived === 0 && (card as Card).isFlipped) {
     rotateClass = '-rotate-45';
   }
+  const mapSelectedClass = {
+    [selectedCard?.id || '1']: 'border-blue-500 border-[3px]',
+    [attackedCard?.id || '2']: 'border-red-500 border-[3px]',
+    [secondAttacked?.id || '3']: 'border-red-400 border-[3px]',
+  }
 
   return <div
     onMouseOut={changeOverState(false)}
     onMouseOver={changeOverState(true)}
     onClick={onClick}
-    className={`border-gray-700 border-solid w-20 rounded-md overflow-hidden relative ${rotateClass} ${className} ${selectedCard === card.id ? 'border-blue-500 border-[3px]' : 'border-[1px]'}`}
+    className={`border-gray-700 border-solid w-20 rounded-md overflow-hidden relative ${rotateClass} ${className} ${mapSelectedClass[card.id] || 'border-[1px]'}`}
   >
     { card.isFreezed && <img src={freezeToken} alt="Imagem de gelo" className='absolute w-6' />}
     {cardImage}

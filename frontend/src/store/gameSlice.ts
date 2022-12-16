@@ -1,5 +1,5 @@
 import { createSelector, createSlice } from "@reduxjs/toolkit";
-import { Actions, GameState, TurnStatus } from "./StateTypes";
+import { Actions, Card, CardType, GameState, HiddenCard, TurnStatus } from "./StateTypes";
 import { RootState } from "./store";
 
 const gameSlice = createSlice({
@@ -8,7 +8,9 @@ const gameSlice = createSlice({
     gameState: {
 
     } as GameState,
-    selectedCard: null as string | null,
+    selectedCard: null as Card | null,
+    attackedCard: null as Card | HiddenCard | null,
+    secondAttacked: undefined as Card | HiddenCard | undefined,
     currentAction: Actions.NONE,
     playerBoard: [
       [],
@@ -35,28 +37,55 @@ const gameSlice = createSlice({
     clearSelected(state) {
       state.selectedCard = null;
       state.currentAction = Actions.NONE;
+      state.attackedCard = null;
+      delete state.secondAttacked;
     },
     selectHandCard(state, { payload }) {
-      if (state.selectedCard === payload.id) {
+      if (state.selectedCard === payload) {
         state.selectedCard = null;
         state.currentAction = Actions.NONE;
       } else {
-        state.selectedCard = payload.id;
+        state.selectedCard = payload;
         state.currentAction = Actions.SET_CARD;
       }
     },
     selectBoardCard(state, { payload }) {
-      if (state.selectedCard === payload.id) {
+      if (state.selectedCard === payload) {
         state.selectedCard = null;
         state.currentAction = Actions.NONE;
       } else {
-        state.selectedCard = payload.id;
+        state.selectedCard = payload;
         if (payload.isFlipped) {
           state.currentAction = Actions.ATTACK;
         } else {
           state.currentAction = Actions.FLIP_CARD;
         }
       }
+    },
+    addAttacked(state, { payload }: { payload: Card | HiddenCard }) {
+      const isNine = (card: Card | HiddenCard | null) => card !== null && (card as Card).cardType === CardType.Nine;
+      if (payload.id === state.attackedCard?.id) {
+        state.attackedCard = null;
+        return;
+      }
+      if (payload.id === state.secondAttacked?.id) {
+        delete state.secondAttacked;
+        return;
+      }
+      if (isNine(state.attackedCard)) {
+        state.attackedCard = payload;
+        delete state.secondAttacked;
+        return;
+      }
+      if (!isNine(state.attackedCard) && isNine(payload)) {
+        state.attackedCard = payload;
+        return;
+      }
+      if (state.selectedCard?.cardType === CardType.Ten && !isNine(payload) && state.attackedCard !== null) {
+        state.secondAttacked = payload;
+        return;
+      }
+      state.attackedCard = payload;
     },
   },
 });
@@ -66,11 +95,12 @@ const { actions, reducer } = gameSlice;
 export const canClickHandCardSelector = createSelector(
   (state: RootState) => state.game,
   (game) => {
+    if (!game.gameState.turnInfo.isMyTurn) return false;
     const { currentState, remainingActions } = game.gameState.turnInfo;
     if (currentState === TurnStatus.WAITING_CHOOSE_DISCAR_CARD) {
       return true;
     }
-    
+
     return currentState === TurnStatus.WAITING_NEXT_ACTION && remainingActions > 0;
   },
 );
@@ -78,6 +108,7 @@ export const canClickHandCardSelector = createSelector(
 export const canClickBoardCardSelector = createSelector(
   (state: RootState) => state.game,
   (game) => {
+    if (!game.gameState.turnInfo.isMyTurn) return false;
     const currentState = game.gameState.turnInfo.currentState;
     if (currentState === TurnStatus.WAITING_NEXT_ACTION) {
       return game.gameState.turnInfo.remainingActions > 0;

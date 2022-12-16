@@ -7,7 +7,7 @@ type ActionButtonProps = {};
 export function ActionButton({ }: ActionButtonProps) {
   const gameState = useAppSelector((state) => state.game.gameState);
   const dispatch = useAppDispatch();
-  const { selectedCard, currentAction } = useAppSelector((state) => state.game);
+  const { selectedCard, currentAction, attackedCard, secondAttacked } = useAppSelector((state) => state.game);
 
   const endTurn = () => {
     api.endTurn()
@@ -21,7 +21,7 @@ export function ActionButton({ }: ActionButtonProps) {
   }
 
   const flipCard = () => {
-    api.flipCard(selectedCard)
+    api.flipCard(selectedCard!.id)
       .then(response => {
         console.log({ responseFlipCard: response });
         dispatch(GameActions.updateState(response.data));
@@ -33,7 +33,7 @@ export function ActionButton({ }: ActionButtonProps) {
   }
 
   const discardCard = () => {
-    api.discardCard(selectedCard)
+    api.discardCard(selectedCard!.id)
       .then(response => {
         console.log({ discardCardResponse: response.data });
         dispatch(GameActions.updateState(response.data));
@@ -42,6 +42,18 @@ export function ActionButton({ }: ActionButtonProps) {
         console.log({ discardCardError: error });
       })
   }
+
+  const attack = () => {
+    api.attack(selectedCard!.id, attackedCard!.id, secondAttacked?.id)
+      .then(response => {
+        console.log({ attackResponse: response.data });
+        dispatch(GameActions.updateState(response.data));
+        dispatch(GameActions.clearSelected());
+      })
+      .catch(error => {
+        console.log({ attackError: error });
+      })
+  };
 
   if (!gameState.turnInfo.isMyTurn) {
     return <div></div>;
@@ -59,6 +71,13 @@ export function ActionButton({ }: ActionButtonProps) {
       className='mb-10 py-1 bg-green-500 text-white rounded-md z-0'
       onClick={flipCard}
     >Flip Card</button>
+  }
+
+  if (currentAction === Actions.ATTACK) {
+    return <button
+      className='mb-10 py-1 bg-green-500 text-white rounded-md z-0'
+      onClick={attack}
+    >Attack</button>
   }
 
   if (gameState.turnInfo.currentState === TurnStatus.WAITING_NEXT_ACTION) {

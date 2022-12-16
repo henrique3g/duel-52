@@ -92,32 +92,35 @@ export class Game {
     this.doNTimes(5, () => this.player1Hand.addCard(draw()));
     this.doNTimes(5, () => this.player2Hand.addCard(draw()));
 
-
     this.doNTimes(16, () => this.discardPile.push(draw()));
   }
 
-  private validatePlayerTurn(playerId: Id) {
+  public validatePlayerTurn(playerId: Id) {
     if (playerId !== this.currentPlayer) {
       throw new Error("Player can't play at opponent turn");
     }
   }
 
-  public validateRemainingActions() {
+  private validateRemainingActions() {
     if (this.remainingActions === 0) {
       throw new Error("Player can't play");
     }
   }
 
-  public endTurn(playerId: Id) {
-    this.validatePlayerTurn(playerId);
+  private validateTurnStatusDefault() {
+    if (this.currentStatus !== TurnStatus.WAITING_NEXT_ACTION) {
+      throw new Error("Action not valid at this moment");
+    }
+  }
 
+  public endTurn() {
     if (this.currentPlayer === this.player1.id) {
       this.currentPlayer = this.player2.id;
     } else {
       this.currentPlayer = this.player1.id;
     }
 
-    const board = this.boards[playerId];
+    const board = this.getPlayerBoard();
     board.resetAttackFlag();
     this.remainingActions = 3;
     this.turnCounter += 1;
@@ -128,13 +131,12 @@ export class Game {
   public setCard(playerId: Id, cardId: Id, laneIndex: number) {
     this.validatePlayerTurn(playerId);
     this.validateRemainingActions();
+    this.validateTurnStatusDefault();
 
-    const board = this.boards[playerId];
-    const hand = this.hands[playerId];
+    const board = this.getPlayerBoard();
+    const hand = this.getPlayerHand();
     const lane = board.lanes[laneIndex];
-    if (lane.isWon) {
-      return;
-    }
+
     const possibleCard = hand.discardCard(cardId);
     if (!possibleCard) {
       throw new Error("Card not found");
@@ -146,6 +148,7 @@ export class Game {
   public flipCard(playerId: Id, cardId: Id, laneIndex: number) {
     this.validatePlayerTurn(playerId);
     this.validateRemainingActions();
+    this.validateTurnStatusDefault();
 
     const board = this.getPlayerBoard();
     const lane = board.lanes[laneIndex];
@@ -161,22 +164,10 @@ export class Game {
     card.flip();
   }
 
-  public getPlayerBoard(): PlayerBoard {
-    return this.boards[this.currentPlayer];
-  }
-
-  public getPlayerHand(): PlayerHand {
-    return this.hands[this.currentPlayer];
-  }
-
-  public getOpponentBoard() {
-    const opponentId = Object.keys(this.boards).find(playerId => playerId !== this.currentPlayer);
-    return this.boards[opponentId];
-  }
-
   public attackCard(playerId: Id, laneIndex: number, attackerId: Id, attackedId: Id, secondAttackedId?: Id) {
     this.validatePlayerTurn(playerId);
     this.validateRemainingActions();
+    this.validateTurnStatusDefault();
 
     const attackerBoard = this.getPlayerBoard();
     const attackerLane = attackerBoard.lanes[laneIndex];
@@ -192,7 +183,6 @@ export class Game {
     const attackedBoard = this.getOpponentBoard();
     const attackedLane = attackedBoard.lanes[laneIndex];
     const attackedCard = attackedLane.getCardById(attackedId);
-
 
     if (!attackedCard) {
       throw new Error("Attacked card not found");
@@ -217,6 +207,19 @@ export class Game {
         card.lane.isWon = true;
       }
     }
+  }
+
+  public getPlayerBoard(): PlayerBoard {
+    return this.boards[this.currentPlayer];
+  }
+
+  public getPlayerHand(): PlayerHand {
+    return this.hands[this.currentPlayer];
+  }
+
+  public getOpponentBoard() {
+    const opponentId = Object.keys(this.boards).find(playerId => playerId !== this.currentPlayer);
+    return this.boards[opponentId];
   }
 
   public drawCard() {
@@ -266,7 +269,7 @@ export class Game {
       throw new Error("Action not permited");
     }
 
-    const board = this.boards[playerId];
+    const board = this.getPlayerBoard();
     const lane = board.lanes[laneIndex];
     const cardToFlip = lane.getCardById(cardId);
     if (!cardToFlip) {
@@ -296,6 +299,7 @@ export class Game {
     cardToEmpower.wasRempowered = true;
     const cards = lane.cards;
     const cardsNotEmpowered = cards.filter(card => card.isFlipped && card.cardType !== CardType.K && !card.wasRempowered);
+    // TODO: What do here when a reactivated card requires a action that will change turn state?
     if (cardsNotEmpowered.length === 0) {
       this.currentStatus = TurnStatus.WAITING_NEXT_ACTION;
       cards.forEach(card => card.wasRempowered = false);
@@ -308,8 +312,14 @@ export class Game {
       throw new Error("Can't do this action");
     }
 
-    const board = this.boards[playerId];
+    const board = this.getPlayerBoard();
     board.moveCard(cardId, fromLaneIndex, toLaneIndex);
+  }
+
+  public addFutureAction(turn: number, action: () => void) {
+    const actions = this.futureActions[turn] || [];
+    actions.push(action);
+    this.futureActions[turn] = actions;
   }
 
   public getPlayerState(playerId: Id): PlayerState {
@@ -355,24 +365,9 @@ export class Game {
     }
   }
 
-  public runFutureAction() {
+  private runFutureAction() {
     const actions = this.futureActions[this.turnCounter] || [];
     actions.forEach(action => action());
-  }
-
-  public freezeLane(laneIndex: number) {
-    const lane = this.getOpponentBoard().lanes[laneIndex];
-    lane.isFreezed = true;
-    this.addFutureAction(this.turnCounter + 2, () => {
-      const lane = this.getOpponentBoard().lanes[laneIndex];
-      lane.isFreezed = false;
-    });
-  }
-
-  private addFutureAction(turn: number, action: () => void) {
-    const actions = this.futureActions[turn] || [];
-    actions.push(action);
-    this.futureActions[turn] = actions;
   }
 
   private getExportCards(cards: Card[]): CardJson[] {

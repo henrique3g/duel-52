@@ -2,6 +2,7 @@
 export type HiddenCard = {
   id: string;
   damageReceived: number;
+  isFreezed: boolean;
 };
 
 export type Card = {
@@ -10,6 +11,7 @@ export type Card = {
   damageReceived: number;
   isFlipped: boolean;
   isBaseCard: boolean;
+  isFreezed: boolean;
   shouldBeLookedBy4Power: boolean;
   wasRempowered: boolean;
   alreadyAttacked: boolean;

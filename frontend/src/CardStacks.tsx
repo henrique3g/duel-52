@@ -10,6 +10,7 @@ type StackCardsProps = {
 const hiddenCard: HiddenCard = {
   id: 'hidden-card',
   damageReceived: 0,
+  isFreezed: false,
 }
 
 export const StackCards = ({ title, quantity, className }: StackCardsProps) => {

@@ -10,7 +10,7 @@ type HandProps = {
 };
 
 function arrayFromSize(size: number = 0) {
-  return Array.from(Array(size), () => ({ id: 'hidden-card', damageReceived: 0 }));
+  return Array.from(Array(size), () => ({ id: 'hidden-card', damageReceived: 0, isFreezed: false }));
 }
 
 export const Hand = ({ cards, handSize, className }: HandProps) => {

@@ -13,6 +13,7 @@ import Ten from './svg/10.svg';
 import J from './svg/j.svg';
 import Q from './svg/q.svg';
 import K from './svg/k.svg';
+import freezeToken from './svg/freezed.svg';
 import { ReactElement, useState } from 'react';
 import { useAppSelector } from './store';
 
@@ -68,8 +69,9 @@ export const CardElement = ({ card, onClick, className, isHidden = false }: Card
     onMouseOut={changeOverState(false)}
     onMouseOver={changeOverState(true)}
     onClick={onClick}
-    className={`border-gray-700 border-solid w-20 rounded-md overflow-hidden ${rotateClass} ${className} ${selectedCard === card.id ? 'border-blue-500 border-[3px]' : 'border-[1px]'}`}
+    className={`border-gray-700 border-solid w-20 rounded-md overflow-hidden relative ${rotateClass} ${className} ${selectedCard === card.id ? 'border-blue-500 border-[3px]' : 'border-[1px]'}`}
   >
+    { card.isFreezed && <img src={freezeToken} alt="Imagem de gelo" className='absolute w-6' />}
     {cardImage}
   </div>;
 }

@@ -14,3 +14,16 @@ export function newGame() {
   return api.post('/game');
 }
 
+export function setCard(cardId: string, laneIndex: number) {
+  return api.post('/game/set-card', { playerId: store.getState().game.gameState.I.playerId, cardId, laneIndex });
+}
+
+
+export function flipCard(cardId: string | null) {
+  return api.post('/game/flip-card', { playerId: store.getState().game.gameState.I.playerId, cardId });
+}
+
+export function discardCard(cardId: string | null) {
+  return api.post('/game/choose-discard-card', { playerId: store.getState().game.gameState.I.playerId, cardId });
+}
+

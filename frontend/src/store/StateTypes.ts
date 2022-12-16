@@ -69,7 +69,6 @@ export enum TurnStatus {
   WAITING_CHOOSE_FLIP_ORDER,
   WAITING_CHOOSE_CARD_TO_MOVE,
   WAITING_CHOOSE_REACTIVATION_ORDER,
-  WAITING_SECOND_CARD_TO_ATTACK,
 }
 
 export enum CardType {
@@ -86,5 +85,13 @@ export enum CardType {
   J = 'j',
   Q = 'q',
   K = 'k'
+}
+
+
+export enum Actions {
+  SET_CARD,
+  FLIP_CARD,
+  NONE,
+  ATTACK
 }
 

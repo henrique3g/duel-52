@@ -14,10 +14,12 @@ import J from './svg/j.svg';
 import Q from './svg/q.svg';
 import K from './svg/k.svg';
 import { ReactElement, useState } from 'react';
+import { useAppSelector } from './store';
 
 type CardProps = {
   card: Card | HiddenCard;
   isHidden?: boolean;
+  onClick?: () => void;
   className?: string;
 };
 
@@ -42,7 +44,8 @@ export function isHiddenCard(card: Card | HiddenCard): boolean {
   return !Object.hasOwn(card, 'cardType');
 }
 
-export const CardElement = ({ card, className, isHidden = false }: CardProps) => {
+export const CardElement = ({ card, onClick, className, isHidden = false }: CardProps) => {
+  const { selectedCard } = useAppSelector(state => state.game);
   const [isMouseOverCard, setIsMouseOverCard] = useState(false);
   let cardImage: ReactElement;
   if (isHiddenCard(card) || (isHidden && !isMouseOverCard)) {
@@ -56,7 +59,17 @@ export const CardElement = ({ card, className, isHidden = false }: CardProps) =>
     return () => setIsMouseOverCard(status);
   }
 
-  return <div style={{ borderWidth: 1 }} onMouseOut={changeOverState(false)} onMouseOver={changeOverState(true)} className={`border-gray-700 border-solid w-20 rounded-md overflow-hidden ${className}`}>
+  let rotateClass = card.damageReceived >= 1 ? '-rotate-90' : '';
+  if (!isHiddenCard(card) && (card as Card).cardType === CardType.J && card.damageReceived === 0 && (card as Card).isFlipped) {
+    rotateClass = '-rotate-45';
+  }
+
+  return <div
+    onMouseOut={changeOverState(false)}
+    onMouseOver={changeOverState(true)}
+    onClick={onClick}
+    className={`border-gray-700 border-solid w-20 rounded-md overflow-hidden ${rotateClass} ${className} ${selectedCard === card.id ? 'border-blue-500 border-[3px]' : 'border-[1px]'}`}
+  >
     {cardImage}
   </div>;
 }

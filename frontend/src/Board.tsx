@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from './store';
 import { TurnManager } from './TurnManager';
 import { StackCards } from './CardStacks';
 import * as api from './api';
+import { ActionButton } from './ActionButton';
 
 
 export const Board = () => {
@@ -22,17 +23,6 @@ export const Board = () => {
     })
   }, [dispatch]);
 
-  const endTurn = () => {
-    api.endTurn()
-      .then(response => {
-        console.log({ responseEndTurn: response });
-        dispatch(GameActions.updateState(response.data));
-      })
-      .catch(error => {
-        console.log({ error });
-      });
-  }
-
   if (!started) {
     return <div>Loading</div>
   }
@@ -46,15 +36,14 @@ export const Board = () => {
           <img alt='Duel 52 logo' src={logo} className="w-1/5 opacity-50" />
         </div>
 
-        
         <Hand handSize={gameState.opponent.hand} className="mt-2 w-3/4" />
 
         <div className='flex flex-1 my-2 w-3/4'>
-          <Lane className='' number={0} />
+          <Lane className='' index={0} />
           <LaneSeparator />
-          <Lane className='' number={1} />
+          <Lane className='' index={1} />
           <LaneSeparator />
-          <Lane className='' number={2} />
+          <Lane className='' index={2} />
         </div>
 
         <Hand cards={gameState.I.hand} className="mb-2 w-3/4" />
@@ -64,11 +53,7 @@ export const Board = () => {
           <StackCards className='' title='Discard pile' quantity={gameState.gameInfo.discardPile} />
         </div>
         <TurnManager className='mb-5 mt-auto z-0' />
-        <button
-          className='mb-10 py-1 bg-red-500 text-white rounded-md z-0'
-          onClick={endTurn}
-          disabled={!gameState.turnInfo.isMyTurn}
-        >End turn</button>
+        <ActionButton />
       </div>
     </div>
   );

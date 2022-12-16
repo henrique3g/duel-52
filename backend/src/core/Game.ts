@@ -143,14 +143,13 @@ export class Game {
     lane.addCard(possibleCard);
   }
 
-  public flipCard(playerId: Id, cardId: Id, laneIndex: number) {
+  public flipCard(playerId: Id, cardId: Id) {
     this.validatePlayerTurn(playerId);
     this.validateRemainingActions();
     this.validateTurnStatusDefault();
 
     const board = this.getPlayerBoard();
-    const lane = board.lanes[laneIndex];
-    const possibleCard = lane.getCardById(cardId);
+    const possibleCard = board.getCardById(cardId);
     if (!possibleCard) {
       throw new Error();
     }
@@ -162,14 +161,13 @@ export class Game {
     card.flip();
   }
 
-  public attackCard(playerId: Id, laneIndex: number, attackerId: Id, attackedId: Id, secondAttackedId?: Id) {
+  public attackCard(playerId: Id, attackerId: Id, attackedId: Id, secondAttackedId?: Id) {
     this.validatePlayerTurn(playerId);
     this.validateRemainingActions();
     this.validateTurnStatusDefault();
 
     const attackerBoard = this.getPlayerBoard();
-    const attackerLane = attackerBoard.lanes[laneIndex];
-    const attackerCard = attackerLane.getCardById(attackerId);
+    const attackerCard = attackerBoard.getCardById(attackerId);
 
     if (!attackerCard) {
       throw new Error("Attacker card not found");
@@ -178,6 +176,7 @@ export class Game {
       throw new Error("Card can't attack");
     }
 
+    const laneIndex = attackerCard.lane.index;
     const attackedBoard = this.getOpponentBoard();
     const attackedLane = attackedBoard.lanes[laneIndex];
     const attackedCard = attackedLane.getCardById(attackedId);
@@ -263,20 +262,20 @@ export class Game {
     }, 5000);
   }
 
-  public flipCardAction(playerId: Id, cardId: Id, laneIndex: number) {
+  public flipCardAction(playerId: Id, cardId: Id) {
     this.validatePlayerTurn(playerId);
     if (this.currentStatus !== TurnStatus.WAITING_CHOOSE_FLIP_ORDER) {
       throw new Error("Action not permited");
     }
 
+    // TODO: block to not permit flip in others lane
     const board = this.getPlayerBoard();
-    const lane = board.lanes[laneIndex];
-    const cardToFlip = lane.getCardById(cardId);
+    const cardToFlip = board.getCardById(cardId);
     if (!cardToFlip) {
       throw new Error("Card not found");
     }
     cardToFlip.flip();
-    const cards = lane.cards;
+    const cards = cardToFlip.lane.cards;
     const cardsNotFlipped = cards.filter(card => card.isFlipped);
 
     if (cardsNotFlipped.length === 0) {
@@ -284,21 +283,20 @@ export class Game {
     }
   }
 
-  public reactivateCard(playerId: Id, cardId: Id, laneIndex: number) {
+  public reactivateCard(playerId: Id, cardId: Id) {
     this.validatePlayerTurn(playerId);
     if (this.currentStatus !== TurnStatus.WAITING_CHOOSE_REACTIVATION_ORDER) {
       throw new Error("Action not permited");
     }
-
+    // TODO: block to not permit reactivate in others lane
     const board = this.boards[playerId];
-    const lane = board.lanes[laneIndex];
-    const cardToEmpower = lane.getCardById(cardId);
+    const cardToEmpower = board.getCardById(cardId);
     if (!cardToEmpower) {
       throw new Error("Card not found");
     }
     cardToEmpower.activateCardPower();
     cardToEmpower.wasRempowered = true;
-    const cards = lane.cards;
+    const cards = cardToEmpower.lane.cards;
     const cardsNotEmpowered = cards.filter(card => card.isFlipped && card.cardType !== CardType.K && !card.wasRempowered);
 
     if (cardsNotEmpowered.length === 0) {

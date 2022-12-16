@@ -112,6 +112,7 @@ export class Game {
   }
 
   public endTurn() {
+    this.validateTurnStatusDefault();
     if (this.currentPlayer === this.player1.id) {
       this.currentPlayer = this.player2.id;
     } else {

@@ -21,6 +21,14 @@ export class PlayerBoard {
     }
   }
 
+  getBaseCardById(cardId: Id): Card | undefined {
+    for (const lane of this.lanes) {
+      if (lane.baseCard.id === cardId) {
+        return lane.baseCard;
+      }
+    }
+  }
+
   moveCard(cardId: string, fromLaneIndex: number, toLaneIndex: number) {
     const fromLane = this.lanes[fromLaneIndex];
     const toLane = this.lanes[toLaneIndex];

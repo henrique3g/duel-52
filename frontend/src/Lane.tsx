@@ -1,6 +1,6 @@
 import { CardElement, isHiddenCard } from "./Card";
 import { canClickBoardCardSelector, GameActions, useAppDispatch, useAppSelector } from "./store";
-import { Actions, Card } from "./store/StateTypes";
+import { Actions, Card, HiddenCard, TurnStatus } from "./store/StateTypes";
 import * as api from './api';
 
 type LaneProps = {
@@ -9,7 +9,7 @@ type LaneProps = {
 };
 
 export const Lane = ({ index: number, className }: LaneProps) => {
-  const { I, opponent } = useAppSelector(state => state.game.gameState);
+  const { I, opponent, turnInfo } = useAppSelector(state => state.game.gameState);
   const { currentAction, selectedCard } = useAppSelector(state => state.game);
   const dispatch = useAppDispatch();
   const myBaseCard = I.board[number].baseCard;
@@ -37,7 +37,36 @@ export const Lane = ({ index: number, className }: LaneProps) => {
     if (!canClickBoardCard) {
       return;
     }
+    if (turnInfo.currentState === TurnStatus.WAITING_CHOOSE_CARD_TO_SEE) {
+      api.seeCard(card.id)
+        .then(response => {
+          console.log({ seeCardResponse: response.data });
+          dispatch(GameActions.updateState(response.data));
+        })
+        .catch(error => {
+          console.log({ seeCardError: error });
+        })
+      return;
+    }
     dispatch(GameActions.selectBoardCard(card))
+  };
+
+
+  const handleClickOtherCards = (card: Card | HiddenCard) => () => {
+    if (!canClickBoardCard) {
+      return;
+    }
+    if (turnInfo.currentState === TurnStatus.WAITING_CHOOSE_CARD_TO_SEE) {
+      api.seeCard(card.id)
+        .then(response => {
+          console.log({ seeCardResponse: response.data });
+          dispatch(GameActions.updateState(response.data));
+        })
+        .catch(error => {
+          console.log({ seeCardError: error });
+        })
+      return;
+    }
   };
 
   return (
@@ -46,12 +75,12 @@ export const Lane = ({ index: number, className }: LaneProps) => {
       onClick={handleClickLane}
     >
       <div className="justify-center flex">
-        {opponentBaseCard !== null && <CardElement card={opponentBaseCard} />}
+        {opponentBaseCard !== null && <CardElement card={opponentBaseCard} onClick={handleClickOtherCards(opponentBaseCard)} />}
       </div>
 
       <div className="mb-1 flex gap-1">
         {opponentCards.map(card => (
-          <CardElement card={card} key={card.id} isHidden={isHiddenCard(card) ? true : !(card as Card).isFlipped} />
+          <CardElement card={card} key={card.id} isHidden={isHiddenCard(card) ? true : !(card as Card).isFlipped} onClick={handleClickOtherCards(card)} />
         ))}
       </div>
 
@@ -61,7 +90,7 @@ export const Lane = ({ index: number, className }: LaneProps) => {
         ))}
       </div>
       <div className="justify-center flex">
-        {myBaseCard !== null && <CardElement card={myBaseCard} />}
+        {myBaseCard !== null && <CardElement card={myBaseCard} onClick={handleClickOtherCards(myBaseCard)} />}
       </div>
     </div>
   );

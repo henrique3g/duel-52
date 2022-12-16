@@ -248,9 +248,9 @@ export class Game {
     if (this.currentStatus !== TurnStatus.WAITING_CHOOSE_CARD_TO_SEE) {
       throw new Error("Can't see a card face down");
     }
-    let card = this.player1Board.getCardById(cardId);
+    let card = this.player1Board.getCardById(cardId) || this.player1Board.getBaseCardById(cardId);
     if (!card) {
-      card = this.player2Board.getCardById(cardId);
+      card = this.player2Board.getCardById(cardId) || this.player2Board.getBaseCardById(cardId);
     }
 
     if (!card) {

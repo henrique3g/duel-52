@@ -27,3 +27,7 @@ export function discardCard(cardId: string | null) {
   return api.post('/game/choose-discard-card', { playerId: store.getState().game.gameState.I.playerId, cardId });
 }
 
+export function seeCard(cardId: string | null) {
+  return api.post('/game/choose-card-to-see', { playerId: store.getState().game.gameState.I.playerId, cardId });
+}
+

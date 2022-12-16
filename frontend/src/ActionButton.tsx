@@ -25,6 +25,7 @@ export function ActionButton({ }: ActionButtonProps) {
       .then(response => {
         console.log({ responseFlipCard: response });
         dispatch(GameActions.updateState(response.data));
+        dispatch(GameActions.clearSelected());
       })
       .catch(error => {
         console.log({ errorFlipCard: error });

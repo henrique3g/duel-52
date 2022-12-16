@@ -13,6 +13,7 @@ export type CardJson = {
   shouldBeLookedBy4Power: boolean;
   wasRempowered: boolean;
   alreadyAttacked: boolean;
+  isFreezed: boolean;
 };
 
 export class Card {
@@ -176,6 +177,7 @@ export class Card {
       isBaseCard: this.isBaseCard,
       shouldBeLookedBy4Power: this.shouldBeLookedBy4Power,
       wasRempowered: this.wasRempowered,
+      isFreezed: this.isFreezed,
     };
   }
 }

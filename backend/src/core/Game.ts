@@ -10,18 +10,17 @@ import { Id } from './MainState';
 type HiddenCard = {
   id: Id;
   damageReceived: number;
+  isFreezed: boolean;
 };
 
 type MyLane = {
   baseCard: CardJson | HiddenCard;
   cards: CardJson[];
-  isFreezed: boolean;
 };
 
 type OpponentLane = {
   baseCard: CardJson | HiddenCard,
   cards: Array<CardJson | HiddenCard>,
-  isFreezed: boolean,
 };
 
 export type PlayerState = {
@@ -52,7 +51,6 @@ export enum TurnStatus {
   WAITING_CHOOSE_FLIP_ORDER,
   WAITING_CHOOSE_CARD_TO_MOVE,
   WAITING_CHOOSE_REACTIVATION_ORDER,
-  WAITING_SECOND_CARD_TO_ATTACK
 }
 
 export class Game {
@@ -61,7 +59,7 @@ export class Game {
   public remainingActions = 3;
   public boards: Record<Id, PlayerBoard> = {};
   public hands: Record<Id, PlayerHand> = {};
-  public currentStatus = TurnStatus.WAITING_NEXT_ACTION;
+  private turnStatus = [TurnStatus.WAITING_NEXT_ACTION];
   public turnCounter = 1;
 
   private futureActions: Record<number, Array<() => void>> = {};
@@ -242,6 +240,7 @@ export class Game {
     const hand = this.getPlayerHand();
     const discardedCard = hand.discardCard(cardId);
     this.discardPile.push(discardedCard);
+    this.currentStatus = TurnStatus.WAITING_NEXT_ACTION;
   }
 
   public seeFaceDownCard(playerId: Id, cardId: Id) {
@@ -258,6 +257,7 @@ export class Game {
       throw new Error("Card don't exist");
     }
     card.shouldBeLookedBy4Power = true;
+    this.currentStatus = TurnStatus.WAITING_NEXT_ACTION;
     setTimeout(() => {
       card.shouldBeLookedBy4Power = false;
     }, 5000);
@@ -278,6 +278,7 @@ export class Game {
     cardToFlip.flip();
     const cards = lane.cards;
     const cardsNotFlipped = cards.filter(card => card.isFlipped);
+
     if (cardsNotFlipped.length === 0) {
       this.currentStatus = TurnStatus.WAITING_NEXT_ACTION;
     }
@@ -299,7 +300,7 @@ export class Game {
     cardToEmpower.wasRempowered = true;
     const cards = lane.cards;
     const cardsNotEmpowered = cards.filter(card => card.isFlipped && card.cardType !== CardType.K && !card.wasRempowered);
-    // TODO: What do here when a reactivated card requires a action that will change turn state?
+
     if (cardsNotEmpowered.length === 0) {
       this.currentStatus = TurnStatus.WAITING_NEXT_ACTION;
       cards.forEach(card => card.wasRempowered = false);
@@ -314,12 +315,31 @@ export class Game {
 
     const board = this.getPlayerBoard();
     board.moveCard(cardId, fromLaneIndex, toLaneIndex);
+    this.currentStatus = TurnStatus.WAITING_NEXT_ACTION;
   }
 
   public addFutureAction(turn: number, action: () => void) {
     const actions = this.futureActions[turn] || [];
     actions.push(action);
     this.futureActions[turn] = actions;
+  }
+
+  private endCurrentTurnStatus() {
+    if (this.turnStatus.length >= 2) {
+      this.turnStatus.pop();
+    }
+  }
+
+  public get currentStatus() {
+    return this.turnStatus[this.turnStatus.length - 1];
+  }
+
+  public set currentStatus(status: TurnStatus) {
+    if (status === TurnStatus.WAITING_NEXT_ACTION) {
+      this.endCurrentTurnStatus();
+    } else {
+      this.turnStatus.push(status);
+    }
   }
 
   public getPlayerState(playerId: Id): PlayerState {
@@ -336,7 +356,6 @@ export class Game {
         board: playerBoard.lanes.map(lane => ({
           baseCard: this.getOpponentCard(lane.baseCard),
           cards: this.getExportCards(lane.cards),
-          isFreezed: lane.isFreezed,
         })) as [MyLane, MyLane, MyLane],
       },
       opponent: {
@@ -344,7 +363,6 @@ export class Game {
         board: opponentBoard.lanes.map(lane => ({
           baseCard: this.getOpponentCard(lane.baseCard),
           cards: lane.cards.map(card => this.getOpponentCard(card)),
-          isFreezed: lane.isFreezed,
         })) as [OpponentLane, OpponentLane, OpponentLane],
       },
       turnInfo: {
@@ -385,6 +403,7 @@ export class Game {
       return {
         id: card.id,
         damageReceived: card.damageReceived,
+        isFreezed: card.isFreezed,
       };
     }
     if (card.isFlipped) {
@@ -393,6 +412,7 @@ export class Game {
     return {
       id: card.id,
       damageReceived: card.damageReceived,
+      isFreezed: card.isFreezed,
     };
   }
 }

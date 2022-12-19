@@ -1,6 +1,6 @@
 import { Id, randomId } from './MainState';
 
 export class Player {
-  constructor(public id: Id = randomId()) { }
+  constructor(public nickname: string, public id: Id = randomId()) { }
 }
 

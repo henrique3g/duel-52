@@ -2,6 +2,7 @@ import { CardElement, isHiddenCard } from "./Card";
 import { canClickBoardCardSelector, GameActions, useAppDispatch, useAppSelector } from "./store";
 import { Actions, Card, HiddenCard, TurnStatus } from "./store/StateTypes";
 import * as api from './api';
+import { useParams } from "react-router-dom";
 
 type LaneProps = {
   index: number;
@@ -18,13 +19,14 @@ export const Lane = ({ index: number, className }: LaneProps) => {
   const opponentCards = opponent.board[number].cards;
   const availabilityClass = currentAction === Actions.SET_CARD ? 'border-2 border-blue-500' : '';
   const canClickBoardCard = useAppSelector(canClickBoardCardSelector);
+  const { roomId } = useParams();
 
   const handleClickLane = () => {
     if (currentAction !== Actions.SET_CARD) {
       return;
     }
-    console.log({selectedCard})
-    api.setCard(selectedCard!.id, number)
+    console.log({ selectedCard })
+    api.setCard(roomId, selectedCard!.id, number)
       .then(response => {
         dispatch(GameActions.clearSelected());
         dispatch(GameActions.updateState(response.data));
@@ -39,7 +41,7 @@ export const Lane = ({ index: number, className }: LaneProps) => {
       return;
     }
     if (turnInfo.currentState === TurnStatus.WAITING_CHOOSE_CARD_TO_SEE) {
-      api.seeCard(card.id)
+      api.seeCard(roomId, card.id)
         .then(response => {
           console.log({ seeCardResponse: response.data });
           dispatch(GameActions.updateState(response.data));
@@ -50,7 +52,7 @@ export const Lane = ({ index: number, className }: LaneProps) => {
       return;
     }
     if (turnInfo.currentState === TurnStatus.WAITING_CHOOSE_FLIP_ORDER) {
-      api.selectCardToFlip(card.id)
+      api.selectCardToFlip(roomId, card.id)
         .then(response => {
           console.log({ flipCardAbilityResponse: response.data });
           dispatch(GameActions.updateState(response.data));
@@ -61,7 +63,7 @@ export const Lane = ({ index: number, className }: LaneProps) => {
       return;
     }
     if (turnInfo.currentState === TurnStatus.WAITING_CHOOSE_REACTIVATION_ORDER) {
-      api.selectCardToReactivate(card.id)
+      api.selectCardToReactivate(roomId, card.id)
         .then(response => {
           console.log({ reactivateCardAbilityResponse: response.data });
           dispatch(GameActions.updateState(response.data));
@@ -80,7 +82,7 @@ export const Lane = ({ index: number, className }: LaneProps) => {
       return;
     }
     if (turnInfo.currentState === TurnStatus.WAITING_CHOOSE_CARD_TO_SEE) {
-      api.seeCard(card.id)
+      api.seeCard(roomId, card.id)
         .then(response => {
           console.log({ seeCardResponse: response.data });
           dispatch(GameActions.updateState(response.data));
@@ -100,17 +102,17 @@ export const Lane = ({ index: number, className }: LaneProps) => {
       className={`h-full bg-emerald-400/50 rounded-md p-1 flex-1 flex flex-col justify-between ${className} ${availabilityClass}`}
       onClick={handleClickLane}
     >
-      <div className="justify-center flex">
+      <div className="justify-center flex ">
         {opponentBaseCard !== null && <CardElement card={opponentBaseCard} onClick={handleClickOtherCards(opponentBaseCard)} />}
       </div>
 
-      <div className="mb-1 flex gap-1">
+      <div className="mb-1 flex gap-1 flex-wrap">
         {opponentCards.map(card => (
           <CardElement card={card} key={card.id} isHidden={isHiddenCard(card) ? true : !(card as Card).isFlipped} onClick={handleClickOtherCards(card)} />
         ))}
       </div>
 
-      <div className="mt-1 flex gap-1">
+      <div className="mt-1 flex gap-1 flex-wrap">
         {myCards.map(card => (
           <CardElement card={card} key={card.id} isHidden={!card.isFlipped} onClick={handleClickMyCard(card)} />
         ))}

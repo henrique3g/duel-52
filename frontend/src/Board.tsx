@@ -8,20 +8,47 @@ import { TurnManager } from './TurnManager';
 import { StackCards } from './CardStacks';
 import * as api from './api';
 import { ActionButton } from './ActionButton';
+import { getSocket } from './api/socket';
+import { useParams } from 'react-router-dom';
 
 
 export const Board = () => {
   const gameState = useAppSelector((state) => state.game.gameState);
+  const { playerId } = useAppSelector((state) => state.game);
   const dispatch = useAppDispatch();
   const [started, setStarted] = useState(false);
+  const { roomId } = useParams();
 
+  // useEffect(() => {
+  //   api.newGame().then(response => {
+  //     console.log({ response });
+  //     setStarted(true);
+  //     dispatch(GameActions.updateState(response.data));
+  //   })
+  // }, [dispatch]);
   useEffect(() => {
-    api.newGame().then(response => {
-      console.log({ response });
-      setStarted(true);
-      dispatch(GameActions.updateState(response.data));
+    api.getGameState(roomId, playerId!)
+      .then(response => {
+        dispatch(GameActions.updateState(response));
+        setStarted(true);
+      }).catch(error => {
+        console.log({ firstGetGameStateError: error });
+      });
+    const socket = getSocket();
+    socket.on('state-updated', () => {
+      api.getGameState(roomId, playerId!)
+        .then(data => {
+          dispatch(GameActions.updateState(data));
+        })
+        .catch(error => {
+          console.log({ getGameStateError: error });
+        });
     })
-  }, [dispatch]);
+
+    return () => {
+      socket.off('state-updated');
+    };
+  }, []);
 
   if (!started) {
     return <div>Loading</div>

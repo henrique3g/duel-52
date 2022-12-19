@@ -12,6 +12,7 @@ const gameSlice = createSlice({
     attackedCard: null as Card | HiddenCard | null,
     secondAttacked: undefined as Card | HiddenCard | undefined,
     currentAction: Actions.NONE,
+    playerId: null as null | string,
     playerBoard: [
       [],
       [],
@@ -24,6 +25,9 @@ const gameSlice = createSlice({
     },
   },
   reducers: {
+    setPlayer(state, { payload }) {
+      state.playerId = payload;
+    },
     changePlayer(state) {
       if (state.round.currentPlayer === 1) {
         state.round.currentPlayer = 2;

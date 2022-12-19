@@ -1,6 +1,7 @@
 import { Actions, TurnStatus } from "./store/StateTypes";
 import * as api from './api';
 import { GameActions, useAppDispatch, useAppSelector } from "./store";
+import { useParams } from "react-router-dom";
 
 type ActionButtonProps = {};
 
@@ -8,9 +9,10 @@ export function ActionButton({ }: ActionButtonProps) {
   const gameState = useAppSelector((state) => state.game.gameState);
   const dispatch = useAppDispatch();
   const { selectedCard, currentAction, attackedCard, secondAttacked } = useAppSelector((state) => state.game);
+  const { roomId } = useParams();
 
   const endTurn = () => {
-    api.endTurn()
+    api.endTurn(roomId,)
       .then(response => {
         console.log({ responseEndTurn: response });
         dispatch(GameActions.updateState(response.data));
@@ -21,7 +23,7 @@ export function ActionButton({ }: ActionButtonProps) {
   }
 
   const flipCard = () => {
-    api.flipCard(selectedCard!.id)
+    api.flipCard(roomId, selectedCard!.id)
       .then(response => {
         console.log({ responseFlipCard: response });
         dispatch(GameActions.updateState(response.data));
@@ -33,7 +35,7 @@ export function ActionButton({ }: ActionButtonProps) {
   }
 
   const discardCard = () => {
-    api.discardCard(selectedCard!.id)
+    api.discardCard(roomId, selectedCard!.id)
       .then(response => {
         console.log({ discardCardResponse: response.data });
         dispatch(GameActions.updateState(response.data));
@@ -44,7 +46,7 @@ export function ActionButton({ }: ActionButtonProps) {
   }
 
   const attack = () => {
-    api.attack(selectedCard!.id, attackedCard!.id, secondAttacked?.id)
+    api.attack(roomId, selectedCard!.id, attackedCard!.id, secondAttacked?.id)
       .then(response => {
         console.log({ attackResponse: response.data });
         dispatch(GameActions.updateState(response.data));
